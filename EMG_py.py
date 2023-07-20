@@ -188,6 +188,77 @@ def main_DWT():
     EMG_plot_comparision_DWT(19, 15, emg_signal_healthy_range, emg_signal_myopathy_range, emg_signal_neuropathy_range, emg_signal_healthy_denoised_DWT, emg_signal_myopathy_denoised_DWT, emg_signal_neuropathy_denoised_DWT, 4000, start)
 
 
+'''
 main_DWT()
+'''
+
+
+#Autoregressive AR model
+def AR(emg_signal_healthy_range, emg_signal_myopathy_range, emg_signal_neuropathy_range, order):
+
+    #Denoising using an autoregressive model for a healthy person
+    model_healthy = AutoReg(emg_signal_healthy_range, lags=order,trend = 'ct')#Signal decomposition into coefficients with a specific order
+    model_fit_healthy = model_healthy.fit()#Matching the signal to the coefficients
+    coefficients_healthy = model_fit_healthy.params#Defining the parameters of the model
+    emg_signal_healthy_denoised_AR = np.convolve(emg_signal_healthy_range, coefficients_healthy)#Convolution of both signals
+    emg_signal_healthy_denoised_AR = emg_signal_healthy_denoised_AR[:len(emg_signal_healthy_range)]
+
+    #Denoising using an autoregressive model for a person with myopathy
+    model_myopathy = AutoReg(emg_signal_myopathy_range, lags=order)
+    model_fit_myopathy = model_myopathy.fit()
+    coefficients_myopathy = model_fit_myopathy.params
+    emg_signal_myopathy_denoised_AR = np.convolve(emg_signal_myopathy_range, coefficients_myopathy)
+    emg_signal_myopathy_denoised_AR = emg_signal_myopathy_denoised_AR[:len(emg_signal_myopathy_range)]
+
+    #Denoising using an autoregressive model for a person with neuropathy
+    model_neuropathy = AutoReg(emg_signal_neuropathy_range, lags=order)
+    model_fit_neuropathy = model_neuropathy.fit()
+    coefficients_neuropathy = model_fit_neuropathy.params
+    emg_signal_neuropathy_denoised_AR = np.convolve(emg_signal_neuropathy_range, coefficients_neuropathy)
+    emg_signal_neuropathy_denoised_AR = emg_signal_neuropathy_denoised_AR[:len(emg_signal_neuropathy_range)]
+
+    return emg_signal_healthy_denoised_AR, emg_signal_myopathy_denoised_AR, emg_signal_neuropathy_denoised_AR
+
+def EMG_plot_comparision_AR(x_size, y_size, emg_signal_healthy_range, emg_signal_myopathy_range, emg_signal_neuropathy_range, emg_signal_healthy_denoised_AR, emg_signal_myopathy_denoised_AR, emg_signal_neuropathy_denoised_AR, fs, start, delay):
+    offset = start/fs
+    time = np.arange(len(emg_signal_healthy_denoised_AR)) / fs + offset
+
+    plt.figure(figsize=(x_size, y_size))
+
+    #Subplot for a healthy person
+    plt.subplot(311)
+    plt.plot(time, emg_signal_healthy_range, label='Noisy EMG signal of a healthy person')
+    plt.plot(time[start:len(emg_signal_healthy_range)], emg_signal_healthy_denoised_AR, label='Denoised EMG signal of a healthy person')
+    plt.title('EMG signal after AR denoising')
+    plt.ylabel('Amplitude [mV]')
+    plt.legend()
+
+    #Subplot for a person with myopathy
+    plt.subplot(312)
+    plt.plot(time, emg_signal_myopathy_range, label='Noisy EMG signal of a person with myopathy')
+    plt.plot(time[start:len(emg_signal_myopathy_range)], emg_signal_myopathy_denoised_AR, label='Denoised EMG signal of a person with myopathy')
+    plt.ylabel('Amplitude [mV]')
+    plt.legend()
+
+    #Subplot for a person with neuropathy
+    plt.subplot(313)
+    plt.plot(time, emg_signal_neuropathy_range, label='Noisy EMG signal of a person with neuropathy')
+    plt.plot(time[start:len(emg_signal_neuropathy_range)], emg_signal_neuropathy_denoised_AR, label='Denoised EMG signal of a person with neuropathy')
+    plt.xlabel('Time [s]')
+    plt.ylabel('Amplitude [mV]')
+    plt.legend()
+    plt.show()
+
+def main_AR():
+    emg_signal_healthy_range, emg_signal_myopathy_range, emg_signal_neuropathy_range, start = Load_data(0, 8000)
+    emg_signal_healthy_denoised_AR, emg_signal_myopathy_denoised_AR, emg_signal_neuropathy_denoised_AR = AR(emg_signal_healthy_range, emg_signal_myopathy_range, emg_signal_neuropathy_range, 500)
+    EMG_plot_comparision_AR(19, 15, emg_signal_healthy_range, emg_signal_myopathy_range, emg_signal_neuropathy_range, emg_signal_healthy_denoised_AR, emg_signal_myopathy_denoised_AR, emg_signal_neuropathy_denoised_AR, 4000, start, 15)
+
+
+'''
+main_AR()
+'''
+
+
 
 
