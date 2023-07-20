@@ -1,1 +1,1 @@
-# EMG-denoising-EMD-AR-DWT
+# EMG-denoising-EMD-DWT-AR
