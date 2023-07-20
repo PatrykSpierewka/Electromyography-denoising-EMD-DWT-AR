@@ -255,10 +255,89 @@ def main_AR():
     EMG_plot_comparision_AR(19, 15, emg_signal_healthy_range, emg_signal_myopathy_range, emg_signal_neuropathy_range, emg_signal_healthy_denoised_AR, emg_signal_myopathy_denoised_AR, emg_signal_neuropathy_denoised_AR, 4000, start, 15)
 
 
-
+'''
 main_AR()
+'''
 
 
+def Load_data_eval(start, stop):#Load signals from an alternative database
+
+    record_raw = wfdb.rdrecord('ndof_raw_combination10_sample1', channels=[0])
+    record_preproces = wfdb.rdrecord('ndof_preprocess_combination10_sample1', channels=[0])
+
+    emg_raw = record_raw.p_signal.flatten()
+    emg_range_raw = emg_raw[start: stop]
+
+    emg_preproces = record_preproces.p_signal.flatten()
+    emg_range_preproces = emg_raw[start: stop]
+
+    return emg_range_raw, emg_range_preproces, start
 
 
+def EMD_eval(emg_range_raw):#Use of the EMD algorithm for the new signal
+    decomposer = pyhht.EMD(emg_range_raw)
+    imfs = decomposer.decompose()
+    noise_window = emg_range_raw[12000:20500]
+    thresholds = np.std(noise_window)
+    imfs_filtered = [pywt.threshold(c, thresholds) for c in imfs]
+    emg_denoise_EMD = np.sum(imfs_filtered, axis=0)
+    return emg_denoise_EMD
 
+
+def DWT_eval(emg_range_raw, wavelet, level, value, mode):#Use of the DWT algorithm for the new signal
+    coefficients = pywt.wavedec(emg_range_raw, wavelet, level=level)
+    coefficients[1:] = (pywt.threshold(i, value=value, mode=mode) for i in coefficients[1:])
+    emg_range_denoised_DWT = pywt.waverec(coefficients, wavelet)
+    return emg_range_denoised_DWT
+
+
+def AR_eval(emg_range_raw, order):#Use of AR algorithm for new signal
+    model = AutoReg(emg_range_raw, lags=order)
+    model_fit = model.fit()
+    coefficients = model_fit.params
+    emg_range_denoise_AR = np.convolve(emg_range_raw, coefficients)
+    emg_range_denoise_AR = emg_range_denoise_AR[:len(emg_range_raw)]
+    return emg_range_denoise_AR
+
+
+def evaluate(noisy_signal, denoised_signal):#Calculation of qualitative metrics
+    mse = mean_squared_error(noisy_signal, denoised_signal)
+    mae = mean_absolute_error(noisy_signal, denoised_signal)
+    snr = 10 * np.log10(np.mean(noisy_signal ** 2) / mse)
+    return mse, mae, snr
+
+
+def plot_comparison(original_signal, denoised_signal, method_name,fs):#Comparative visualization of noise reduction with reference noise reduction
+    time = np.arange(len(original_signal)) / fs
+    plt.figure(figsize=(12, 6))
+    plt.plot(time, original_signal, label='Reference denoised signal')
+    plt.plot(time, denoised_signal, label='Signal denoised by: ({})'.format(method_name))
+    plt.xlabel('Time [s]')
+    plt.ylabel('Amplitude')
+    plt.title('Comparison of signals - reference denoising, EMD, DWT, AR algorithms')
+    plt.legend()
+    plt.show()
+
+
+def main_eval():  # Running evaluation block
+    emg_range_raw, emg_range_preproces, start = Load_data_eval(0, 51200)
+    emg_denoise_EMD = EMD_eval(emg_range_raw)
+    emg_denoise_DWT = DWT_eval(emg_range_raw, wavelet='db4', level=5, value=0.5, mode='soft')
+    emg_denoise_AR = AR_eval(emg_range_raw, order=20)
+
+    mse_EMD, mae_EMD, snr_EMD = evaluate(emg_range_preproces, emg_denoise_EMD)
+    mse_DWT, mae_DWT, snr_DWT = evaluate(emg_range_preproces, emg_denoise_DWT)
+    mse_AR, mae_AR, snr_AR = evaluate(emg_range_preproces, emg_denoise_AR)
+
+    print("EMD - MSE: {:.4f}, MAE: {:.4f}, SNR: {:.4f} [dB]".format(mse_EMD, mae_EMD, snr_EMD))
+    print("DWT - MSE: {:.4f}, MAE: {:.4f}, SNR: {:.4f} [dB]".format(mse_DWT, mae_DWT, snr_DWT))
+    print("AR - MSE: {:.4f}, MAE: {:.4f}, SNR: {:.4f} [dB]".format(mse_AR, mae_AR, snr_AR))
+
+    plot_comparison(emg_range_preproces, emg_denoise_EMD, 'EMD', 2048)
+    plot_comparison(emg_range_preproces, emg_denoise_DWT, 'DWT', 2048)
+    plot_comparison(emg_range_preproces, emg_denoise_AR, 'AR', 2048)
+
+
+'''
+main_eval()
+'''
