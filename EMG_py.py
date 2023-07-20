@@ -28,7 +28,7 @@ def Load_data(start, stop):
 
     return emg_signal_healthy_range, emg_signal_myopathy_range, emg_signal_neuropathy_range, start
 
-def EMG_plot_noise(x_size, y_size, emg_signal_healthy_range, emg_signal_myopathy_range, emg_signal_neuropathy_range,fs, start):#Zaszumiony sygnał
+def EMG_plot_noise(x_size, y_size, emg_signal_healthy_range, emg_signal_myopathy_range, emg_signal_neuropathy_range,fs, start):
 
     offset = start/fs
     time = np.arange(len(emg_signal_healthy_range)) / fs + offset
@@ -60,9 +60,11 @@ def main_plot():
     emg_signal_healthy_range, emg_signal_myopathy_range, emg_signal_neuropathy_range, start = Load_data(0, 8000)
     EMG_plot_noise(19, 15, emg_signal_healthy_range, emg_signal_myopathy_range, emg_signal_neuropathy_range, 4000, start)
 
+
 '''
 main_plot()
 '''
+
 
 #Empirical Mode Decomposition denoising
 def EMD(emg_signal_healthy_range, emg_signal_myopathy_range, emg_signal_neuropathy_range):#Empirical mode decomposition
@@ -90,8 +92,7 @@ def EMD(emg_signal_healthy_range, emg_signal_myopathy_range, emg_signal_neuropat
 
     return emg_signal_healthy_denoised_EMD, emg_signal_myopathy_denoised_EMD, emg_signal_neuropathy_denoised_EMD
 
-def EMG_plot_comparision_EMD(x_size, y_size, emg_signal_healthy_range, emg_signal_myopathy_range, emg_signal_neuropathy_range, emg_signal_healthy_denoised_EMD, emg_signal_myopathy_denoised_EMD, emg_signal_neuropathy_denoised_EMD, fs, start):#Porównanie zaszumionego sygnału z odszumionym EMD
-
+def EMG_plot_comparision_EMD(x_size, y_size, emg_signal_healthy_range, emg_signal_myopathy_range, emg_signal_neuropathy_range, emg_signal_healthy_denoised_EMD, emg_signal_myopathy_denoised_EMD, emg_signal_neuropathy_denoised_EMD, fs, start):
     offset = start/fs
     time = np.arange(len(emg_signal_healthy_range)) / fs + offset
 
@@ -126,6 +127,67 @@ def main_EMD():
     emg_signal_healthy_denoised_EMD, emg_signal_myopathy_denoised_EMD, emg_signal_neuropathy_denoised_EMD = EMD(emg_signal_healthy_range, emg_signal_myopathy_range, emg_signal_neuropathy_range)
     EMG_plot_comparision_EMD(19, 15, emg_signal_healthy_range, emg_signal_myopathy_range, emg_signal_neuropathy_range, emg_signal_healthy_denoised_EMD, emg_signal_myopathy_denoised_EMD, emg_signal_neuropathy_denoised_EMD, 4000, start)
 
+
 '''
 main_EMD()
 '''
+
+
+#Discrete wavelet transform denoising
+def DWT(emg_signal_healthy_range, emg_signal_myopathy_range, emg_signal_neuropathy_range, wavelet, level, value, mode):
+
+    coefficients_healthy = pywt.wavedec(emg_signal_healthy_range, wavelet, level = level)#Wavelet decomposition
+    coefficients_healthy[1:] = (pywt.threshold(i, value = value, mode = mode) for i in coefficients_healthy[1:])#Thresholding in soft mode
+    emg_signal_healthy_denoised_DWT = pywt.waverec(coefficients_healthy, wavelet) #Inverse wavelet transform using reduced wavelets
+
+    #Wavelet transform denoising for a person suffering from myopathy
+    coefficients_myopathy = pywt.wavedec(emg_signal_myopathy_range, wavelet, level = level)
+    coefficients_myopathy[1:] = (pywt.threshold(i, value = value, mode = mode) for i in coefficients_myopathy[1:])
+    emg_signal_myopathy_denoised_DWT = pywt.waverec(coefficients_myopathy, wavelet)
+
+    #Wavelet transform denoising for a person suffering from neuropathy
+    coefficients_neuropathy = pywt.wavedec(emg_signal_neuropathy_range, wavelet, level = level)
+    coefficients_neuropathy[1:] = (pywt.threshold(i, value = value, mode = mode) for i in coefficients_neuropathy[1:])
+    emg_signal_neuropathy_denoised_DWT = pywt.waverec(coefficients_neuropathy, wavelet)
+
+    return emg_signal_healthy_denoised_DWT, emg_signal_myopathy_denoised_DWT, emg_signal_neuropathy_denoised_DWT
+
+def EMG_plot_comparision_DWT(x_size, y_size, emg_signal_healthy_range, emg_signal_myopathy_range, emg_signal_neuropathy_range, emg_signal_healthy_denoised_DWT, emg_signal_myopathy_denoised_DWT, emg_signal_neuropathy_denoised_DWT, fs, start):
+    offset = start/fs
+    time = np.arange(len(emg_signal_healthy_range)) / fs + offset
+
+    plt.figure(figsize=(x_size, y_size))
+
+    #Subplot for a healthy person
+    plt.subplot(311)
+    plt.plot(time, emg_signal_healthy_range, label='Noisy EMG signal of a healthy person')
+    plt.plot(time, emg_signal_healthy_denoised_DWT, label='Denoised EMG signal of a healthy person')
+    plt.title('EMG signal after DWT denoising')
+    plt.ylabel('Amplitude [mV]')
+    plt.legend()
+
+    #Subplot for a person with myopathy
+    plt.subplot(312)
+    plt.plot(time, emg_signal_myopathy_range, label='Noisy EMG signal of a person with myopathy')
+    plt.plot(time, emg_signal_myopathy_denoised_DWT, label='Denoised EMG signal of a person with myopathy')
+    plt.ylabel('Amplitude [mV]')
+    plt.legend()
+
+    #Subplot for a person with neuropathy
+    plt.subplot(313)
+    plt.plot(time, emg_signal_neuropathy_range, label='Noisy EMG signal of a person with neuropathy')
+    plt.plot(time, emg_signal_neuropathy_denoised_DWT, label='Denoised EMG signal of a person with neuropathy')
+    plt.xlabel('Time [s]')
+    plt.ylabel('Amplitude [mV]')
+    plt.legend()
+    plt.show()
+
+def main_DWT():
+    emg_signal_healthy_range, emg_signal_myopathy_range, emg_signal_neuropathy_range, start = Load_data(0, 8000)
+    emg_signal_healthy_denoised_DWT, emg_signal_myopathy_denoised_DWT, emg_signal_neuropathy_denoised_DWT = DWT(emg_signal_healthy_range, emg_signal_myopathy_range, emg_signal_neuropathy_range, 'db4', 4, 1, 'soft')
+    EMG_plot_comparision_DWT(19, 15, emg_signal_healthy_range, emg_signal_myopathy_range, emg_signal_neuropathy_range, emg_signal_healthy_denoised_DWT, emg_signal_myopathy_denoised_DWT, emg_signal_neuropathy_denoised_DWT, 4000, start)
+
+
+main_DWT()
+
+
