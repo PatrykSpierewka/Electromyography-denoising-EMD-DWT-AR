@@ -255,9 +255,9 @@ def main_AR():
     EMG_plot_comparision_AR(19, 15, emg_signal_healthy_range, emg_signal_myopathy_range, emg_signal_neuropathy_range, emg_signal_healthy_denoised_AR, emg_signal_myopathy_denoised_AR, emg_signal_neuropathy_denoised_AR, 4000, start, 15)
 
 
-'''
+
 main_AR()
-'''
+
 
 
 
