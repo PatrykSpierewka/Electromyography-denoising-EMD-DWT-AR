@@ -12,3 +12,7 @@ Three algorithms were used for denoising:
 - Discrete Wavelet Transform,
 - Autoregressive Model.
 
+
+<p align="center">
+    <img width="647" alt="Zrzut ekranu 2023-07-22 o 18 19 17" src="https://github.com/PatrykSpierewka/Electromyography-denoising-EMD-DWT-AR/assets/101202344/a28b8df9-26fb-4723-a5a8-93ca7dbd9598">
+</p>
