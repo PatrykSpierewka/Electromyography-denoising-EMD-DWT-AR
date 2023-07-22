@@ -22,3 +22,7 @@ The quality of the denoise was determined by a reference signal that had two ver
 <p align="center">
     <img width="385" alt="Zrzut ekranu 2023-07-22 o 18 27 26" src="https://github.com/PatrykSpierewka/Electromyography-denoising-EMD-DWT-AR/assets/101202344/3e82fda5-de85-4706-a9a3-78967cc78787">
 </p>
+
+<p align="center">
+    <img width="736" alt="Zrzut ekranu 2023-07-22 o 18 28 13" src="https://github.com/PatrykSpierewka/Electromyography-denoising-EMD-DWT-AR/assets/101202344/38a9c542-402f-4bf6-a38b-4cb9c79903b9">
+</p>
