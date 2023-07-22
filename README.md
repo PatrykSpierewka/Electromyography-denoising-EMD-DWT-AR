@@ -18,3 +18,7 @@ Three algorithms were used for denoising:
 </p>
 
 The quality of the denoise was determined by a reference signal that had two versions: denoised and noised. The original denoised signal was compared to the denoised signal using the following algorithms: EMD, DWT, AR. Qualitative measures such as Mean Squared Error, Mean Absolute Error and Signal to Noise Ratio were calculated.
+
+<p align="center">
+    <img width="385" alt="Zrzut ekranu 2023-07-22 o 18 27 26" src="https://github.com/PatrykSpierewka/Electromyography-denoising-EMD-DWT-AR/assets/101202344/3e82fda5-de85-4706-a9a3-78967cc78787">
+</p>
